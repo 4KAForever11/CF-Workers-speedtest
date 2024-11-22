@@ -101,45 +101,25 @@ const HTML = `
             text-align: center;
             background-color: #141526;
             color: white;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-        
-        .header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 20px;
+            justify-content: center;
             box-sizing: border-box;
-        }
-        
-        .nav-buttons {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .nav-button {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            overflow: hidden;
         }
         
         .test-area {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            margin: 40px 0;
+            margin: 20px 0;
         }
         
         .speed-test-button {
-            width: 240px;
-            height: 240px;
+            width: 200px;  /* 稍微减小按钮尺寸 */
+            height: 200px;
             border-radius: 50%;
             border: 2px solid #00b3b3;
             background: none;
@@ -166,13 +146,19 @@ const HTML = `
             position: absolute;
             top: -2px;
             left: -2px;
-            width: 240px;
-            height: 240px;
+            width: 200px;  /* 对应按钮新尺寸 */
+            height: 200px;
             transform: rotate(-90deg);
         }
         
+        .progress-ring circle {
+            r: 99;  /* 调整圆圈大小 */
+            cx: 100;
+            cy: 100;
+        }
+        
         .server-info {
-            margin-top: 40px;
+            margin-top: 20px;
             display: flex;
             align-items: center;
             gap: 20px;
@@ -186,17 +172,18 @@ const HTML = `
         }
         
         .server-icon {
-            width: 40px;
-            height: 40px;
+            width: 30px;  /* 稍微减小图标尺寸 */
+            height: 30px;
             border-radius: 50%;
             background-color: #333;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 14px;
         }
         
         .result {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 24px;
             color: #00b3b3;
         }
@@ -207,19 +194,8 @@ const HTML = `
             color: #888;
         }
         
-        .change-server {
-            color: #00b3b3;
-            text-decoration: none;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-        
-        .change-server:hover {
-            text-decoration: underline;
-        }
-        
         .speed-results {
-            margin-top: 30px;
+            margin-top: 20px;
             display: flex;
             gap: 40px;
             justify-content: center;
@@ -231,37 +207,30 @@ const HTML = `
         
         .speed-label {
             color: #888;
-            font-size: 16px;
+            font-size: 14px;
             margin-bottom: 5px;
         }
         
         .speed-value {
             color: #00b3b3;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             margin-bottom: 5px;
         }
         
         .speed-unit {
             color: #888;
-            font-size: 14px;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="nav-buttons">
-            <a href="#" class="nav-button">📊 测试结果</a>
-            <a href="#" class="nav-button">⚙️ 设置</a>
-        </div>
-    </div>
-    
     <div class="test-area">
         <button id="testButton" class="speed-test-button" onclick="startTest()">
             开始
             <svg class="progress-ring" id="progressRing">
-                <circle r="119" cx="120" cy="120" fill="none" stroke="#00b3b3" stroke-width="2" 
-                        stroke-dasharray="747.7" stroke-dashoffset="747.7" id="progressCircle"/>
+                <circle r="99" cx="100" cy="100" fill="none" stroke="#00b3b3" stroke-width="2" 
+                        stroke-dasharray="621.7" stroke-dashoffset="621.7" id="progressCircle"/>
             </svg>
         </button>
         <div class="progress" id="progress"></div>
@@ -270,12 +239,12 @@ const HTML = `
             <div class="speed-item">
                 <div class="speed-label">下载速度</div>
                 <div class="speed-value" id="downloadResult">--</div>
-                <div class="speed-unit">Mbps</div>
+                <div class="speed-unit">MB/s</div>
             </div>
             <div class="speed-item">
                 <div class="speed-label">上传速度</div>
                 <div class="speed-value" id="uploadResult">--</div>
-                <div class="speed-unit">Mbps</div>
+                <div class="speed-unit">MB/s</div>
             </div>
         </div>
     </div>
@@ -292,7 +261,6 @@ const HTML = `
             <div class="server-icon">🌍</div>
             <div>
                 <div id="serverLocation">自动选择</div>
-                <a href="#" class="change-server">更换服务器</a>
             </div>
         </div>
     </div>
@@ -305,7 +273,7 @@ const HTML = `
     function updateProgress(percent, type) {
         const progress = document.getElementById('progress');
         const progressCircle = document.getElementById('progressCircle');
-        const circumference = 747.7;
+        const circumference = 621.7;  // 更新为新的周长值 (2 * π * 99)
         
         if (progress) {
             progress.textContent = type + '测试: ' + percent.toFixed(1) + '%';
@@ -334,19 +302,22 @@ const HTML = `
         if (progress) {
             progress.textContent = type === 'download' ? '准备下载测试...' : '准备上传测试...';
         }
-        const speed = await testFn();
+        const speedMbps = await testFn();
+        
+        // 将 Mbps 转换为 MB/s (1 MB/s = 8 Mbps)
+        const speedMBps = (speedMbps / 8).toFixed(2);
         
         // 保存测试结果
         if (type === 'download') {
-            downloadSpeed = speed;
+            downloadSpeed = speedMBps;
         } else {
-            uploadSpeed = speed;
+            uploadSpeed = speedMBps;
         }
         
         if (result) {
             result.textContent = (type === 'download' ? '下载' : '上传') + '测试完成';
         }
-        return speed;
+        return speedMBps;
     }
     
     async function startTest() {
@@ -368,7 +339,7 @@ const HTML = `
         result.textContent = '';
         speedResults.style.display = 'none';
         isTestRunning = true;
-        progressCircle.style.strokeDashoffset = '747.7';
+        progressCircle.style.strokeDashoffset = '621.7';
         
         try {
             // 下载测试
@@ -428,7 +399,7 @@ const HTML = `
         } finally {
             isTestRunning = false;
             progress.textContent = '';
-            progressCircle.style.strokeDashoffset = '747.7';
+            progressCircle.style.strokeDashoffset = '621.7';
         }
     }
     </script>
