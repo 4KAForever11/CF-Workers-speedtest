@@ -118,43 +118,107 @@ const HTML = `
         }
         
         .speed-test-button {
-            width: 200px;  /* 稍微减小按钮尺寸 */
-            height: 200px;
+            width: 300px;  /* 增加按钮尺寸 */
+            height: 300px; /* 增加按钮尺寸 */
             border-radius: 50%;
-            border: 2px solid #00b3b3;
+            border: 3px solid #00b3b3; /* 增加边框粗细 */
             background: none;
             color: white;
-            font-size: 48px;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 179, 179, 0.2); /* 添加柔和的发光效果 */
         }
         
-        .speed-test-button:hover {
-            background-color: rgba(0, 179, 179, 0.1);
+        .current-speed {
+            font-size: 64px; /* 增大速度数字的字体 */
+            color: #00b3b3;
+            margin-bottom: 5px;
+            font-weight: 300; /* 使字体更纤细 */
         }
         
-        .speed-test-button:disabled {
-            border-color: #666;
-            cursor: not-allowed;
+        .speed-unit {
+            font-size: 20px; /* 增大单位的字体 */
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .test-status {
+            font-size: 18px; /* 增大状态文字的字体 */
+            color: #888;
         }
         
         .progress-ring {
             position: absolute;
-            top: -2px;
-            left: -2px;
-            width: 200px;  /* 对应按钮新尺寸 */
-            height: 200px;
+            top: -3px;
+            left: -3px;
+            width: 300px;
+            height: 300px;
             transform: rotate(-90deg);
+            filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.3)); /* 添加发光效果 */
         }
         
         .progress-ring circle {
-            r: 99;  /* 调整圆圈大小 */
-            cx: 100;
-            cy: 100;
+            r: 148.5;
+            cx: 150;
+            cy: 150;
+            fill: none;
+            stroke: #00b3b3;
+            stroke-width: 6px; /* 增加进度条宽度 */
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.2s ease;
+            filter: url(#glow); /* 应用滤镜效果 */
+        }
+        
+        /* 添加渐变和发光效果 */
+        .progress-ring circle {
+            stroke: url(#gradient);
+        }
+        
+        /* 添加背景圆环 */
+        .progress-ring-background {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 300px;
+            height: 300px;
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-background circle {
+            r: 148.5;
+            cx: 150;
+            cy: 150;
+            fill: none;
+            stroke: rgba(0, 179, 179, 0.1);
+            stroke-width: 6px;
+            stroke-linecap: round;
+        }
+        
+        /* 添加悬停效果 */
+        .speed-test-button:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 30px rgba(0, 179, 179, 0.3);
+        }
+        
+        /* 添加脉动动画 */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .speed-test-button:not(:disabled) {
+            animation: pulse 2s infinite;
+        }
+        
+        /* 调整结果显示区域的位置 */
+        .speed-results {
+            margin-top: 40px; /* 增加与按钮的间距 */
         }
         
         .server-info {
@@ -222,16 +286,102 @@ const HTML = `
             color: #888;
             font-size: 12px;
         }
+        
+        /* 添加速度计样式 */
+        .speedometer {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        .speedometer-gauge {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(
+                from 180deg,
+                #00b3b3 0deg,
+                #00ffff 90deg,
+                #00ff00 180deg
+            );
+            border-radius: 150px 150px 0 0;
+            mask: radial-gradient(circle at 50% 100%, transparent 40%, black 41%);
+            -webkit-mask: radial-gradient(circle at 50% 100%, transparent 40%, black 41%);
+        }
+        
+        .speedometer-center {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        
+        .current-speed {
+            font-size: 36px;
+            color: #00b3b3;
+            margin-bottom: 5px;
+        }
+        
+        .speed-unit {
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .test-status {
+            font-size: 16px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .speed-needle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            height: 110px;
+            background: #ff3366;
+            transform-origin: bottom center;
+            transform: rotate(-90deg);
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body>
     <div class="test-area">
         <button id="testButton" class="speed-test-button" onclick="startTest()">
-            开始
-            <svg class="progress-ring" id="progressRing">
-                <circle r="99" cx="100" cy="100" fill="none" stroke="#00b3b3" stroke-width="2" 
-                        stroke-dasharray="621.7" stroke-dashoffset="621.7" id="progressCircle"/>
+            <!-- 添加背景圆环 -->
+            <svg class="progress-ring-background">
+                <circle r="148.5" cx="150" cy="150"/>
             </svg>
+            
+            <!-- 进度条圆环 -->
+            <svg class="progress-ring" id="progressRing">
+                <!-- 添加渐变和发光滤镜定义 -->
+                <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00b3b3;stop-opacity:1" />
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <circle r="148.5" cx="150" cy="150" 
+                        stroke-dasharray="933.5" 
+                        stroke-dashoffset="933.5" 
+                        id="progressCircle"/>
+            </svg>
+            
+            <div class="current-speed" id="currentSpeed">开始</div>
+            <div class="speed-unit" id="speedUnit"></div>
+            <div class="test-status" id="testStatus"></div>
         </button>
         <div class="progress" id="progress"></div>
         <div class="result" id="result"></div>
@@ -265,59 +415,55 @@ const HTML = `
         </div>
     </div>
 
+    <div class="speedometer" id="speedometer">
+        <div class="speedometer-gauge"></div>
+        <div class="speed-needle" id="speedNeedle"></div>
+        <div class="speedometer-center">
+            <div class="current-speed" id="currentSpeed">0</div>
+            <div class="speed-unit">MB/s</div>
+        </div>
+    </div>
+
     <script>
     let isTestRunning = false;
     let downloadSpeed = 0;
     let uploadSpeed = 0;
     
-    function updateProgress(percent, type) {
-        const progress = document.getElementById('progress');
-        const progressCircle = document.getElementById('progressCircle');
-        const circumference = 621.7;  // 更新为新的周长值 (2 * π * 99)
+    function updateSpeed(speed, type) {
+        const currentSpeed = document.getElementById('currentSpeed');
+        const speedUnit = document.getElementById('speedUnit');
+        const testStatus = document.getElementById('testStatus');
         
-        if (progress) {
-            progress.textContent = type + '测试: ' + percent.toFixed(1) + '%';
-        }
-        if (progressCircle) {
-            progressCircle.style.strokeDashoffset = (circumference - (percent / 100) * circumference).toString();
-        }
-    }
-    
-    function showFinalResults() {
-        const speedResults = document.getElementById('speedResults');
-        const downloadResult = document.getElementById('downloadResult');
-        const uploadResult = document.getElementById('uploadResult');
-        
-        if (speedResults && downloadResult && uploadResult) {
-            speedResults.style.display = 'flex';
-            downloadResult.textContent = downloadSpeed;
-            uploadResult.textContent = uploadSpeed;
+        if (currentSpeed && speedUnit && testStatus) {
+            // 确保速度是数字并且大于0
+            if (typeof speed === 'number' && speed > 0) {
+                const speedMBps = (speed / 8).toFixed(2);
+                currentSpeed.textContent = speedMBps;
+                speedUnit.textContent = 'MB/s';
+                testStatus.textContent = type + '测试中';
+            }
         }
     }
     
     async function runSpeedTest(type, testFn) {
-        const result = document.getElementById('result');
-        const progress = document.getElementById('progress');
+        const currentSpeed = document.getElementById('currentSpeed');
+        const speedUnit = document.getElementById('speedUnit');
+        const testStatus = document.getElementById('testStatus');
         
-        if (progress) {
-            progress.textContent = type === 'download' ? '准备下载测试...' : '准备上传测试...';
-        }
+        // 重置显示
+        currentSpeed.textContent = '0.00';
+        speedUnit.textContent = 'MB/s';
+        testStatus.textContent = type + '测试中';
+        
         const speedMbps = await testFn();
         
-        // 将 Mbps 转换为 MB/s (1 MB/s = 8 Mbps)
-        const speedMBps = (speedMbps / 8).toFixed(2);
-        
-        // 保存测试结果
         if (type === 'download') {
-            downloadSpeed = speedMBps;
+            downloadSpeed = speedMbps;
         } else {
-            uploadSpeed = speedMBps;
+            uploadSpeed = speedMbps;
         }
         
-        if (result) {
-            result.textContent = (type === 'download' ? '下载' : '上传') + '测试完成';
-        }
-        return speedMBps;
+        return speedMbps;
     }
     
     async function startTest() {
@@ -325,21 +471,25 @@ const HTML = `
         
         const testButton = document.getElementById('testButton');
         const result = document.getElementById('result');
-        const progress = document.getElementById('progress');
         const progressCircle = document.getElementById('progressCircle');
         const speedResults = document.getElementById('speedResults');
-        
-        if (!testButton || !result || !progress || !progressCircle) {
-            console.error('Required elements not found');
-            return;
-        }
+        const currentSpeed = document.getElementById('currentSpeed');
+        const speedUnit = document.getElementById('speedUnit');
+        const testStatus = document.getElementById('testStatus');
         
         // 重置显示
-        testButton.textContent = '测试中';
+        currentSpeed.textContent = '准备中';
+        speedUnit.textContent = '';
+        testStatus.textContent = '';
         result.textContent = '';
         speedResults.style.display = 'none';
         isTestRunning = true;
-        progressCircle.style.strokeDashoffset = '621.7';
+        
+        // 确保进度条完全重置
+        if (progressCircle) {
+            progressCircle.style.strokeDasharray = '933.5';
+            progressCircle.style.strokeDashoffset = '933.5';
+        }
         
         try {
             // 下载测试
@@ -350,18 +500,51 @@ const HTML = `
                 
                 const reader = response.body.getReader();
                 let receivedLength = 0;
+                let lastUpdate = performance.now();
+                let lastReceived = 0;
+                let speeds = [];
+                
                 const startTime = performance.now();
                 
                 while(true) {
                     const {done, value} = await reader.read();
                     if (done) break;
                     receivedLength += value.length;
-                    const progress_percent = (receivedLength / size) * 100;
-                    updateProgress(progress_percent, '下载');
+                    
+                    const now = performance.now();
+                    if (now - lastUpdate > 100) {
+                        const duration = (now - lastUpdate) / 1000;
+                        const currentSpeed = ((receivedLength - lastReceived) * 8 / duration / 1024 / 1024);
+                        
+                        speeds.push(currentSpeed);
+                        if (speeds.length > 3) speeds.shift();
+                        const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+                        
+                        const progress_percent = (receivedLength / size) * 100;
+                        
+                        // 更新显示
+                        const currentSpeedElem = document.getElementById('currentSpeed');
+                        const speedUnitElem = document.getElementById('speedUnit');
+                        const testStatusElem = document.getElementById('testStatus');
+                        const progressCircle = document.getElementById('progressCircle');
+                        
+                        if (currentSpeedElem && speedUnitElem && testStatusElem) {
+                            currentSpeedElem.textContent = (avgSpeed / 8).toFixed(2);
+                            speedUnitElem.textContent = 'MB/s';
+                            testStatusElem.textContent = '下载测试中';
+                        }
+                        
+                        if (progressCircle) {
+                            progressCircle.style.strokeDashoffset = (621.7 - (progress_percent / 100) * 621.7).toString();
+                        }
+                        
+                        lastUpdate = now;
+                        lastReceived = receivedLength;
+                    }
                 }
                 
                 const duration = (performance.now() - startTime) / 1000;
-                return (receivedLength * 8 / duration / 1024 / 1024).toFixed(2);
+                return (receivedLength * 8 / duration / 1024 / 1024);
             });
             
             // 上传测试
@@ -369,7 +552,11 @@ const HTML = `
                 const size = 5 * 1024 * 1024;
                 const data = new Uint8Array(size);
                 const chunkSize = 65536;
+                let uploadedSize = 0;
+                let lastUpdate = performance.now();
+                let speeds = [];
                 
+                // 准备上传数据
                 for (let i = 0; i < size; i += chunkSize) {
                     const chunk = new Uint8Array(Math.min(chunkSize, size - i));
                     crypto.getRandomValues(chunk);
@@ -377,32 +564,118 @@ const HTML = `
                 }
                 
                 const startTime = performance.now();
-                const response = await fetch(new URL('upload', window.location.href).href, {
-                    method: 'POST',
-                    body: data
+                
+                return new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', new URL('upload', window.location.href).href);
+                    
+                    xhr.upload.onprogress = (event) => {
+                        const now = performance.now();
+                        if (now - lastUpdate > 100) {
+                            const duration = (now - lastUpdate) / 1000;
+                            const currentSpeed = ((event.loaded - uploadedSize) * 8 / duration / 1024 / 1024);
+                            
+                            speeds.push(currentSpeed);
+                            if (speeds.length > 3) speeds.shift();
+                            const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+                            
+                            const progress_percent = (event.loaded / event.total) * 100;
+                            
+                            // 更新显示
+                            const currentSpeedElem = document.getElementById('currentSpeed');
+                            const speedUnitElem = document.getElementById('speedUnit');
+                            const testStatusElem = document.getElementById('testStatus');
+                            const progressCircle = document.getElementById('progressCircle');
+                            
+                            if (currentSpeedElem && speedUnitElem && testStatusElem) {
+                                currentSpeedElem.textContent = (avgSpeed / 8).toFixed(2);
+                                speedUnitElem.textContent = 'MB/s';
+                                testStatusElem.textContent = '上传测试中';
+                            }
+                            
+                            if (progressCircle) {
+                                progressCircle.style.strokeDashoffset = (621.7 - (progress_percent / 100) * 621.7).toString();
+                            }
+                            
+                            lastUpdate = now;
+                            uploadedSize = event.loaded;
+                        }
+                    };
+                    
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            const duration = (performance.now() - startTime) / 1000;
+                            resolve(size * 8 / duration / 1024 / 1024);
+                        } else {
+                            reject(new Error('上传失败: ' + xhr.status));
+                        }
+                    };
+                    
+                    xhr.onerror = () => reject(new Error('上传失败'));
+                    xhr.send(data);
                 });
-                
-                if (!response.ok) throw new Error('上传请求失败: ' + response.status);
-                
-                const duration = (performance.now() - startTime) / 1000;
-                return (size * 8 / duration / 1024 / 1024).toFixed(2);
             });
             
             // 显示最终结果
-            testButton.textContent = '开始';
-            result.textContent = '测试完成';
-            showFinalResults();
+            currentSpeed.textContent = '再次测速';
+            speedUnit.textContent = '';
+            testStatus.textContent = '';
+            showResults();
+            
+            // 完全隐藏进度条
+            if (progressCircle) {
+                progressCircle.style.strokeDashoffset = '933.5';
+            }
             
         } catch (error) {
-            result.textContent = '测试失败: ' + error.message;
-            testButton.textContent = '重试';
+            currentSpeed.textContent = '失败';
+            speedUnit.textContent = '';
+            testStatus.textContent = error.message;
+            
+            // 错误时也要隐藏进度条
+            if (progressCircle) {
+                progressCircle.style.strokeDashoffset = '933.5';
+            }
         } finally {
             isTestRunning = false;
-            progress.textContent = '';
-            progressCircle.style.strokeDashoffset = '621.7';
+            // 确保进度条完全隐藏
+            if (progressCircle) {
+                progressCircle.style.strokeDashoffset = '933.5';
+            }
+        }
+    }
+    
+    function showResults() {
+        const speedResults = document.getElementById('speedResults');
+        const downloadResult = document.getElementById('downloadResult');
+        const uploadResult = document.getElementById('uploadResult');
+        const progressCircle = document.getElementById('progressCircle');
+        
+        if (speedResults && downloadResult && uploadResult) {
+            speedResults.style.display = 'flex';
+            downloadResult.textContent = (downloadSpeed / 8).toFixed(2);
+            uploadResult.textContent = (uploadSpeed / 8).toFixed(2);
+        }
+        
+        // 确保进度条完全隐藏
+        if (progressCircle) {
+            progressCircle.style.strokeDashoffset = '933.5';
         }
     }
     </script>
 </body>
 </html>
 `;
+
+const circumference = 2 * Math.PI * 148.5; // 更新周长值
+
+function updateProgress(percent, type, currentSpeed) {
+    const progressCircle = document.getElementById('progressCircle');
+    const circumference = 933.5; // 新的周长值 (2 * π * 148.5)
+    
+    if (progressCircle) {
+        progressCircle.style.strokeDasharray = circumference;
+        progressCircle.style.strokeDashoffset = (circumference - (percent / 100) * circumference).toString();
+    }
+    // ... 其他代码保持不变 ...
+}
